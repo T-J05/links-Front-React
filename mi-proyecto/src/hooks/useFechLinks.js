@@ -1,51 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-const useFetchLinks = (url, options = {}) => {
-  const [data, setData] = useState([]); // Para almacenar los datos
-  const [loading, setLoading] = useState(true); // Estado de carga
+const useFetchLinks = (url, options = {}, autoFetch = true) => {
+  const [data, setData] = useState(null); // Para almacenar los datos
+  const [loading, setLoading] = useState(false); // Estado de carga
   const [error, setError] = useState(null); // Manejo de errores
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Asigna el método por defecto como GET si no se especifica en `options`.
-        const method = options.method || 'GET';
+      const method = options.method || 'GET';
+      const headers = options.headers || { 'Content-Type': 'application/json' };
+      const config = {
+        method,
+        headers,
+        body: method !== 'GET' && options.body ? JSON.stringify(options.body) : null,
+      };
 
-        // Configura los encabezados. Si no se especifica 'Content-Type', se asume 'application/json' por defecto
-        const headers = options.headers || { 'Content-Type': 'application/json' };
+      const response = await fetch(url, config);
 
-        // Crea el objeto de configuración para la solicitud
-        const config = {
-          method,
-          headers,
-          // Solo se incluye el cuerpo cuando el método no es GET
-          body: method !== 'GET' && options.body ? JSON.stringify(options.body) : null,
-        };
-
-        const response = await fetch(url, config);
-
-        // Si la respuesta no es OK, lanza un error
-        if (!response.ok) {
-          const errorDetail = await response.text(); // Obtener el detalle de error
-          throw new Error(`Error: ${response.status} - ${errorDetail}`);
-        }
-
-        // Solo intentamos parsear la respuesta como JSON si el método es GET
-        const result = method === 'GET' ? await response.json() : null;
-        setData(result); // Guarda los datos en el estado
-      } catch (err) {
-        setError(err.message); // Captura el error
-      } finally {
-        setLoading(false); // Termina el estado de carga
+      if (!response.ok) {
+        const errorDetail = await response.text();
+        throw new Error(`Error: ${response.status} - ${errorDetail}`);
       }
-    };
 
-    fetchData();
-  }, [url, JSON.stringify(options)]); // Agregar 'options' serializado para evitar el efecto de dependencias innecesarias
+      const result = method === 'GET' ? await response.json() : null;
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [url, JSON.stringify(options)]);
 
-  return { data, loading, error };
+  useEffect(() => {
+    if (autoFetch) {
+      fetchData();
+    }
+  }, [fetchData, autoFetch]);
+
+  return { data, loading, error, refetch: fetchData }; // Retornamos `refetch` para llamadas manuales
 };
 
 export default useFetchLinks;

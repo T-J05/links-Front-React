@@ -1,41 +1,26 @@
 import useFetchLinks from "../hooks/useFechLinks.js";
 import api from "../services/url.js";
+import Article from "./Article";
+import handleFetchState from "../utils/handleFetchState"; // Ruta del archivo donde definiste la función
 
 function SectionLinks() {
   const { data, loading, error } = useFetchLinks(api.TODOS);
 
-  if (loading) {
-    return <p>Cargando...</p>;
+
+  const { content, isValid } = handleFetchState({
+    loading,
+    error,
+    data: data?.enlaces,
+    loadingMessage: "Espere un momento, estamos cargando los enlaces...",
+    emptyMessage: "No se encontraron enlaces en este momento."
+  });
+  
+
+  if (!isValid) {
+    return content; 
   }
 
-  if (error) {
-    return <p>Error: {error}</p>;
-  }
-
-  let enlaces = data?.enlaces;
-  console.log({ e: enlaces });
-  console.log({ sd: enlaces.map((e) => e.etiquetas[0].etiqueta.nombre) });
-
-  return (
-    <>
-      <h3>LINKS</h3>
-      <article>
-        {enlaces &&
-          enlaces.map((e) => (
-            <div key={e.id}> 
-              <h4>{e.titulo}</h4>
-              <p>Etiqueta: {e.etiquetas[0]?.etiqueta?.nombre || "Sin etiqueta"}</p>
-              <p>Votos: {e.votos}</p>
-              <a href={e.url}>url</a>
-              <br />
-              <a href={`#/details/${e.id}`} className="btn btn-primary">
-                Más info
-              </a>
-            </div>
-          ))}
-      </article>
-    </>
-  );
+  return <Article enlaces={content} />; 
 }
 
 export default SectionLinks;

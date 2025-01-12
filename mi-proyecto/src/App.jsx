@@ -1,14 +1,20 @@
+import Home from "./pages/Home"
+import CreateLinks from "./pages/CreateLinks";
+import Details from "./pages/Details";
+import { Routes, Route } from 'react-router-dom';
+import FilterLinks from "./pages/FilterLinks";
 
-import Header from './components/Header'
-import Main from "./components/Main"
 
 function App() {
   
-
   return (
     <>
-    <Header />
-    <Main />
+   <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/crearEnlace" element={<CreateLinks/>} />
+        <Route path="/details/:id" element={<Details/>} />
+        <Route path="/filterLinks/:id/:nombre" element={<FilterLinks />} />
+   </Routes>
   </>
   )
 }
